@@ -1,13 +1,18 @@
-// src/redux/reducer.js
-import { SET_SELECTED_REGION, SET_REGION_INFO, TOGGLE_NIGHT_MODE } from './action';
+import {
+  SET_SELECTED_REGION,
+  SET_REGION_INFO,
+  TOGGLE_NIGHT_MODE,
+  SET_LOADING,
+} from './action';
 
 const initialState = {
   selectedRegion: 'united-states',
   regionInfo: null,
-  nightMode: false, // Initial night mode state is set to false (day mode).
+  nightMode: false,
+  showModal: false, // New property added to the initial state.
 };
 
-const reducer = (state = initialState, action) => {
+const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
     case SET_SELECTED_REGION:
       return {
@@ -22,7 +27,12 @@ const reducer = (state = initialState, action) => {
     case TOGGLE_NIGHT_MODE:
       return {
         ...state,
-        nightMode: !state.nightMode, // Toggle the night mode state.
+        nightMode: !state.nightMode,
+      };
+    case SET_LOADING:
+      return {
+        ...state,
+        loading: action.payload,
       };
     default:
       return state;
