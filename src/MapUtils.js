@@ -1,10 +1,12 @@
-import * as turf from '@turf/turf';
+import axios from 'axios';
 
-// Example turf.js function
-export const calculateDistance = (point1, point2) => {
-  const from = turf.point(point1);
-  const to = turf.point(point2);
-  const options = { units: 'kilometers' };
-  const distance = turf.distance(from, to, options);
-  return distance;
+// Function to fetch country GeoJSON data based on the selected region
+export const getCountryGeoJSON = async (selectedRegion) => {
+  try {
+   const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${selectedRegion}&limit=1&addressdetails=1`);
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    throw new Error('Error fetching GeoJSON data');
+  }
 };

@@ -13,7 +13,7 @@ const FormInput = ({ regions, selectedRegion, handleRegionChange, handleLoadButt
           </Option>
         ))}
       </Select>
-      <Button type="primary" onClick={handleLoadButtonClick}>
+      <Button type="primary"  onClick={() => handleLoadButtonClick(selectedRegion)}>
         Load
       </Button>
     </div>

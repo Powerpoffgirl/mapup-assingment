@@ -1,104 +1,155 @@
-// Import necessary packages
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Switch } from 'antd';
 import { EnvironmentOutlined, UserOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import './App.css';
 
-// Import custom components
 import FormInput from './FormInput';
 import RegionInfo from './RegionInfo';
 import OSMMap from './OSMMap';
 import { setSelectedRegion, setRegionInfo, toggleNightMode } from './redux/action';
+import { getCountryGeoJSON } from './MapUtils'; // Function to get the country GeoJSON data
 
 const { Header, Sider, Content, Footer } = Layout;
 
-// Main App component
 function App() {
-  // State management using React hooks
   const [collapsed, setCollapsed] = useState(false);
   const dispatch = useDispatch();
   const selectedRegion = useSelector((state) => state.selectedRegion);
   const regionInfo = useSelector((state) => state.regionInfo);
   const nightMode = useSelector((state) => state.nightMode);
+  const [countryBoundary, setCountryBoundary] = useState(null);
 
-  // Available regions for the select input
   const regions = [
-    { value: 'united-states', label: 'United States' },
-    { value: 'india', label: 'India' },
-    { value: 'united-kingdom', label: 'United Kingdom' },
+    { value: 'United-States', label: 'United States' },
+    { value: 'India', label: 'India' },
+    { value: 'United-Kingdom', label: 'United Kingdom' },
   ];
 
-  // Handler for region selection change
+   // Apply night mode class to the main container based on the nightMode state
+   useEffect(() => {
+    const appContainer = document.querySelector('#app-container');
+    if (nightMode) {
+      appContainer.classList.add('night-mode');
+    } else {
+      appContainer.classList.remove('night-mode');
+    }
+  }, [nightMode]);
+
   const handleRegionChange = (value) => {
     dispatch(setSelectedRegion(value));
   };
 
-  // Handler for load button click to simulate loading region info
-  const handleLoadButtonClick = () => {
-    // Simulate loading region info for demonstration purposes
-    const dummyRegionInfo = {
-      currency: 'USD',
-      speedUnit: 'kmph',
-      distanceUnit: 'kilometers',
-      volumeUnit: 'liters',
-      timezone: 'UTC+0',
+  const handleLoadButtonClick = (selectedRegion) => {
+    // Define a regionInfo object that maps each country to its respective region info
+    const regionInfoMap = {
+      India: {
+        currency: 'Rupees',
+        speedUnit: 'kmph',
+        distanceUnit: 'kilometers',
+        volumeUnit: 'liters',
+        timezone: 'Indian Standard Time (IST)',
+      },
+      'United-Kingdom': {
+        currency: 'Pound Sterling',
+        speedUnit: 'mph',
+        distanceUnit: 'miles',
+        volumeUnit: 'gallons',
+        timezone: 'British Summer Time (BST)',
+      },
+      'United-States': {
+        currency: 'US Dollar',
+        speedUnit: 'mph',
+        distanceUnit: 'miles',
+        volumeUnit: 'gallons',
+        timezone: 'Eastern Standard Time (EST)',
+      },
+      // Add more countries and their region info as needed
     };
-    dispatch(setRegionInfo(dummyRegionInfo));
+  
+    // Get the region info based on the selectedRegion
+    const regionInfo = regionInfoMap[selectedRegion];
+  
+    // Dispatch the region info to update the state
+    dispatch(setRegionInfo(regionInfo));
   };
 
-  // Handler to toggle the sidebar collapse
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
 
-  // Handler for night mode toggle switch
   const handleNightModeToggle = () => {
     dispatch(toggleNightMode());
   };
 
+
+  useEffect(() => {
+    // Load country GeoJSON data when the selected region changes
+    const fetchCountryGeoJSON = async () => {
+      try {
+        const geoJSONData = await getCountryGeoJSON(selectedRegion);
+        console.log("Country GeoJSON", geoJSONData);
+        setCountryBoundary(geoJSONData);
+      } catch (error) {
+        console.error('Error fetching GeoJSON data:', error);
+      }
+    };
+
+    fetchCountryGeoJSON();
+  }, [selectedRegion]);
+
+  console.log("COUNTRY BOUNDARY", countryBoundary);
+  if (countryBoundary && countryBoundary.length > 0) {
+    console.log("COUNTRY BOUNDARY", countryBoundary[0].lat);
+  }
+
   return (
-    // Main layout structure using Ant Design components
-    <Layout style={{ minHeight: '100vh' }}>
-      {/* Sidebar */}
+    <div id="app-container" className="app-container">
+<Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={toggleSidebar}>
         <div className="logo">Logo</div>
         <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
-          {/* Map menu item */}
-          <Menu.Item key="1" icon={<EnvironmentOutlined />}>
+          <Menu.Item className='mapItem' key="1" icon={<EnvironmentOutlined />}>
             Map
           </Menu.Item>
-          {/* Night Mode toggle menu item */}
           <Menu.Item key="night-mode" icon={<UserOutlined />}>
             <Switch checked={nightMode} onChange={handleNightModeToggle} />
             Night Mode
           </Menu.Item>
         </Menu>
       </Sider>
-      {/* Main content area */}
       <Layout>
-        {/* Header */}
         <Header className="header">
           <div className="user-profile">
-            {/* Replace the below dummy buttons with actual authentication functionality */}
             <Button icon={<UserOutlined />}>Profile</Button>
             <Button icon={<LoginOutlined />}>Login</Button>
             <Button icon={<LogoutOutlined />}>Logout</Button>
           </div>
         </Header>
-        {/* Main content */}
-        <Content>
-          {/* OpenStreetMap component */}
-          <OSMMap center={[51.505, -0.09]} zoom={13} markerPosition={[51.505, -0.09]} />
-          {/* Form input component */}
+        <Content className="content">
+          <OSMMap
+                center={
+                  countryBoundary && countryBoundary.length > 0
+                    ? [countryBoundary[0].lat, countryBoundary[0].lon]
+                    : [20.5937, 78.9629] // Default center if countryBoundary is null or empty (center of India)
+              }
+              zoom={countryBoundary && countryBoundary.length > 0 ? 1 : 1} // Adjust the zoom level based on the data
+              markerPosition={
+                countryBoundary && countryBoundary.length > 0
+                  ? [countryBoundary[0].lat, countryBoundary[0].lon] // Pass the correct array of latitude and longitude
+                  : null // No marker if countryBoundary is null or empty
+              }
+              countryBoundary={countryBoundary}
+            />
+
           <FormInput regions={regions} selectedRegion={selectedRegion} handleRegionChange={handleRegionChange} handleLoadButtonClick={handleLoadButtonClick} />
-          {/* Region info component */}
           <RegionInfo selectedRegion={selectedRegion} regionInfo={regionInfo} />
         </Content>
-        {/* Footer */}
         <Footer className="footer">Plain text footer</Footer>
       </Layout>
     </Layout>
+    </div>
+    
   );
 }
 

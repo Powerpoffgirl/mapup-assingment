@@ -20,17 +20,27 @@
 
 .floating-controls {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 60px;
+  left: 15px;
   z-index: 1;
   display: flex;
   gap: 10px;
 }
 
+.mapItem{
+  top: 90px;
+}
+
 .region-info-card {
   position: absolute;
-  top: 20px;
+  top: 90px;
   right: 20px;
-  z-index: 1;
+  z-index: 400;
   width: 250px;
+}
+
+/* Night mode styles for the entire application */
+.app-container.night-mode {
+  background-color: #222;
+  color: #fff;
 }
